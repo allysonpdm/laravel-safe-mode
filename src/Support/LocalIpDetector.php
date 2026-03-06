@@ -64,9 +64,22 @@ class LocalIpDetector
             return false;
         }
 
-        $resolved = gethostbyname($host);
+        // gethostbynamel retorna todos os IPs IPv4 do hostname (ou false em falha).
+        // Isso cobre service names do Docker como "mysql", "postgres", "db", etc.,
+        // que resolvem para endereços privados da rede interna do container.
+        $addresses = @gethostbynamel($host);
 
-        return ($resolved !== $host) && self::matchesLocalRules($resolved);
+        if (! is_array($addresses) || empty($addresses)) {
+            return false;
+        }
+
+        foreach ($addresses as $resolved) {
+            if (self::isExactLocal($resolved) || self::hasPrivatePrefix($resolved)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
