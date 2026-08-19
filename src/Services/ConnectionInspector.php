@@ -48,6 +48,14 @@ class ConnectionInspector
             );
         }
 
+        // Validação: a conexão de auditoria NÃO pode ser remota (por segurança)
+        if (!$this->isLocalConnection($auditConnection)) {
+            throw new AuditConnectionException(
+                "[SafeMode] A conexão de auditoria '{$auditConnection}' aponta para um servidor remoto. " .
+                "Configure SAFE_MODE_AUDIT_CONNECTION para uma conexão local (ex: pgsql_logs) em .env"
+            );
+        }
+
         try {
             DB::connection($auditConnection)->getPdo();
         } catch (\Throwable $e) {
